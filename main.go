@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -24,22 +23,32 @@ func main() {
 	bundle.LoadMessageFileFS(localeFS, "locales/en.json")
 	bundle.LoadMessageFileFS(localeFS, "locales/ja.json")
 
-	lang := os.Getenv("LANG")
-	if !strings.HasPrefix(lang, "ja") {
-		lang = "en"
-	}
-	localizer := i18n.NewLocalizer(bundle, lang)
-
+	// Language option
+	langFlag := flag.String("lang", "", "Specify the language (e.g., en, ja)")
 	helpFlag := flag.Bool("h", false, "Show help")
 	flag.BoolVar(helpFlag, "help", false, "Show help")
 	flag.Parse()
+
+	var lang string
+	if *langFlag != "" {
+		lang = *langFlag
+	} else {
+		lang = os.Getenv("LANG")
+	}
+
+	if !strings.HasPrefix(lang, "ja") {
+		lang = "en"
+	}
+
+	localizer := i18n.NewLocalizer(bundle, lang)
 
 	if *helpFlag {
 		usage, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpUsage"})
 		description, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpDescription"})
 		help, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpFlag"})
+		langHelp, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpLangFlag"})
 
-		fmt.Printf("%s\n\n%s\n\nOptions:\n  -h, --help    %s\n", usage, description, help)
+		fmt.Printf("%s\n\n%s\n\nOptions:\n  -h, --help    %s\n  -lang string  %s\n", usage, description, help, langHelp)
 		os.Exit(0)
 	}
 
@@ -98,7 +107,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	for _, branch := range branches {
+	for _, branch := range branchesToDelete {
 		deleteCmd := exec.Command("git", "branch", "-d", branch)
 		deleteOutput, err := deleteCmd.CombinedOutput()
 		if err != nil {

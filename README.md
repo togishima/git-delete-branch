@@ -49,16 +49,21 @@ This tool provides an interactive command-line interface to view and delete mult
 
 ## Usage
 
-Once the alias is configured, you can run the tool from any Git repository on your system:
+Run the tool using its Git alias:
 
 ```sh
 git delete-branch
 ```
 
-To see the help message, use the `-h` or `--help` flag:
+### Command-Line Options
+
+- `-h`, `--help`: Show the help message.
+- `-lang <lang>`: Specify the display language (`en` or `ja`). This overrides the system's `LANG` environment variable.
+
+Example of specifying the language:
 
 ```sh
-git delete-branch -h
+git delete-branch -lang ja
 ```
 
 ### How to Interact

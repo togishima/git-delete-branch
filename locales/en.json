@@ -29,7 +29,7 @@
   },
   {
     "id": "HelpUsage",
-    "translation": "Usage: git-delete-branch [-h|--help]"
+    "translation": "Usage: git-delete-branch [options]"
   },
   {
     "id": "HelpDescription",
@@ -38,5 +38,9 @@
   {
     "id": "HelpFlag",
     "translation": "Show this help message"
+  },
+  {
+    "id": "HelpLangFlag",
+    "translation": "Specify the language (e.g., en, ja)"
   }
 ]
