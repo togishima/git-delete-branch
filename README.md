@@ -45,7 +45,11 @@ This tool provides an interactive command-line interface to view and delete mult
     To use this tool like a native Git command (e.g., `git delete-branch`), add a Git alias. Open your global `.gitconfig` file or run the following command:
 
     ```sh
-    git config --global alias.delete-branch '!/path/to/your/git-delete-branch/git-delete-branch'
+        ```sh
+    git config --global alias.delete-branch '!$(pwd)/git-delete-branch'
+    ```
+
+    **Important:** This command assumes you are running it from the `git-delete-branch` project directory after building the executable.
     ```
 
     **Important:** Replace `/path/to/your/git-delete-branch/git-delete-branch` with the absolute path to the executable you built in the previous step.
