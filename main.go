@@ -1,8 +1,8 @@
 
-
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"flag"
@@ -58,6 +58,10 @@ func main() {
 	langFlag := flag.String("lang", "", "Specify the language (e.g., en, ja)")
 	helpFlag := flag.Bool("h", false, "Show help")
 	flag.BoolVar(helpFlag, "help", false, "Show help")
+
+	// Internal flag for fzf preview
+	getLogFlag := flag.String("get-log", "", "Internal flag to get log for a branch")
+
 	flag.Parse()
 
 	var lang string
@@ -73,6 +77,19 @@ func main() {
 
 	localizer := i18n.NewLocalizer(bundle, lang)
 
+	// Handle internal fzf preview request
+	if *getLogFlag != "" {
+		cmd := exec.Command("git", "log", "--color=always", *getLogFlag)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting log for %s: %v\n", *getLogFlag, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	if *helpFlag {
 		usage, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpUsage"})
 		description, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpDescription"})
@@ -81,6 +98,13 @@ func main() {
 
 		fmt.Printf("%s\n\n%s\n\nOptions:\n  -h, --help    %s\n  -lang string  %s\n", usage, description, help, langHelp)
 		os.Exit(0)
+	}
+
+	// Check if fzf is installed
+	if _, err := exec.LookPath("fzf"); err != nil {
+		fmt.Println(localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "FzfNotFound"}))
+		fmt.Println(localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "InstallFzf"}))
+		os.Exit(1)
 	}
 
 	// Get current branch
@@ -122,19 +146,55 @@ func main() {
 		os.Exit(0)
 	}
 
-	var branchesToDelete []string
-	promptMsg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "SelectBranchesToDelete"})
-	prompt := &survey.MultiSelect{
-		Message: promptMsg,
-		Options: cleanBranches,
+	// Prepare fzf command
+	// Use os.Args[0] to get the path to the current executable
+	executablePath, err := os.Executable()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting executable path: %v\n", err)
+		os.Exit(1)
 	}
-	survey.AskOne(prompt, &branchesToDelete)
 
-	if len(branchesToDelete) == 0 {
+	fzfCmd := exec.Command("fzf", "--multi", "--preview", fmt.Sprintf("%s -get-log {}", executablePath))
+	fzfCmd.Stderr = os.Stderr // Show fzf errors
+
+	// Pass branches to fzf stdin
+	fzfStdin, err := fzfCmd.StdinPipe()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating stdin pipe for fzf: %v\n", err)
+		os.Exit(1)
+	}
+	go func() {
+		defer fzfStdin.Close()
+		for _, branch := range cleanBranches {
+			fmt.Fprintln(fzfStdin, branch)
+		}
+	}()
+
+	// Capture fzf stdout
+	var fzfStdout bytes.Buffer
+	fzfCmd.Stdout = &fzfStdout
+
+	// Run fzf
+	err = fzfCmd.Run()
+	if err != nil {
+		// fzf returns non-zero exit code if no selection or cancelled
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 130 {
+			// User cancelled (Ctrl+C or Esc)
+			fmt.Println(localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "DeletionCancelled"}))
+			os.Exit(0)
+		}
+		fmt.Fprintf(os.Stderr, "Error running fzf: %v\n", err)
+		os.Exit(1)
+	}
+
+	selectedBranchesStr := strings.TrimSpace(fzfStdout.String())
+	if selectedBranchesStr == "" {
 		msg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "NoBranchesSelected"})
 		fmt.Println(msg)
 		os.Exit(0)
 	}
+
+	branchesToDelete := strings.Split(selectedBranchesStr, "\n")
 
 	// Get details for selected branches
 	var details []BranchDetail
@@ -175,12 +235,13 @@ func main() {
 	}
 	fmt.Println(strings.Repeat("-", 90))
 
-	confirm := false
-	promptConfirm := &survey.Confirm{
+	// Use survey.Confirm for final confirmation
+	confirmPrompt := &survey.Confirm{
 		Message: "Proceed with deletion?",
 		Default: false,
 	}
-	survey.AskOne(promptConfirm, &confirm)
+	var confirm bool
+	survey.AskOne(confirmPrompt, &confirm)
 
 	if !confirm {
 		cancelMsg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "DeletionCancelled"})

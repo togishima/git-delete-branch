@@ -19,6 +19,7 @@ This tool provides an interactive command-line interface to view and delete mult
 
 - [Go](https://golang.org/doc/install) 1.16 or later must be installed.
 - Git must be installed.
+- [fzf](https://github.com/junegunn/fzf#installation) must be installed and available in your PATH.
 
 ### Steps
 

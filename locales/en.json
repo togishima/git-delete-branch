@@ -74,5 +74,13 @@
   {
     "id": "ErrorGettingBranchDetails",
     "translation": "Error getting details for branch {{.Branch}}: {{.Error}}"
+  },
+  {
+    "id": "FzfNotFound",
+    "translation": "Error: fzf not found. Please install fzf to use this tool."
+  },
+  {
+    "id": "InstallFzf",
+    "translation": "You can install fzf from: https://github.com/junegunn/fzf#installation"
   }
 ]
