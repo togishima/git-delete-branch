@@ -26,5 +26,17 @@
   {
     "id": "BranchDeletedSuccessfully",
     "translation": "Branch '{{.Branch}}' deleted successfully."
+  },
+  {
+    "id": "HelpUsage",
+    "translation": "Usage: git-delete-branch [-h|--help]"
+  },
+  {
+    "id": "HelpDescription",
+    "translation": "An interactive Git plugin to delete local branches."
+  },
+  {
+    "id": "HelpFlag",
+    "translation": "Show this help message"
   }
 ]

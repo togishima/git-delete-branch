@@ -26,5 +26,17 @@
   {
     "id": "BranchDeletedSuccessfully",
     "translation": "ブランチ '{{.Branch}}' を削除しました。"
+  },
+  {
+    "id": "HelpUsage",
+    "translation": "使用法: git-delete-branch [-h|--help]"
+  },
+  {
+    "id": "HelpDescription",
+    "translation": "ローカルのGitブランチをインタラクティブに削除するプラグインです。"
+  },
+  {
+    "id": "HelpFlag",
+    "translation": "このヘルプメッセージを表示します"
   }
 ]

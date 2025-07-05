@@ -1,10 +1,13 @@
+
 package main
 
 import (
 	"embed"
+	"encoding/json"
+	"flag"
 	"fmt"
-	os"
-	os/exec"
+	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -17,19 +20,30 @@ var localeFS embed.FS
 
 func main() {
 	bundle := i18n.NewBundle(language.English)
-	bundle.RegisterUnmarshalFunc("json", func(bytes []byte, v interface{}) error {
-		return json.Unmarshal(bytes, v)
-	})
+	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 	bundle.LoadMessageFileFS(localeFS, "locales/en.json")
 	bundle.LoadMessageFileFS(localeFS, "locales/ja.json")
 
 	lang := os.Getenv("LANG")
-	// Default to English if LANG is not set or is not Japanese
 	if !strings.HasPrefix(lang, "ja") {
 		lang = "en"
 	}
-
 	localizer := i18n.NewLocalizer(bundle, lang)
+
+	helpFlag := flag.Bool("h", false, "Show help")
+	flag.BoolVar(helpFlag, "help", false, "Show help")
+	flag.Parse()
+
+	if *helpFlag {
+		usage, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpUsage"})
+		description, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpDescription"})
+		help, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "HelpFlag"})
+
+		fmt.Printf("%s\n\n%s\n\nOptions:\n  -h, --help    %s\n", usage, description, help)
+		os.Exit(0)
+	}
+
+	// ... (rest of the code is the same)
 
 	// Get current branch
 	currentBranchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
@@ -84,7 +98,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	for _, branch := range branchesToDelete {
+	for _, branch := range branches {
 		deleteCmd := exec.Command("git", "branch", "-d", branch)
 		deleteOutput, err := deleteCmd.CombinedOutput()
 		if err != nil {

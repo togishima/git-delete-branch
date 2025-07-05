@@ -55,6 +55,12 @@ Once the alias is configured, you can run the tool from any Git repository on yo
 git delete-branch
 ```
 
+To see the help message, use the `-h` or `--help` flag:
+
+```sh
+git delete-branch -h
+```
+
 ### How to Interact
 
 - **Navigate:** Use the **Up/Down arrow keys** to move through the list of branches.
