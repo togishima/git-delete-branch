@@ -42,5 +42,37 @@
   {
     "id": "HelpLangFlag",
     "translation": "Specify the language (e.g., en, ja)"
+  },
+  {
+    "id": "ConfirmDeletion",
+    "translation": "Are you sure you want to delete the following branches?"
+  },
+  {
+    "id": "Branch",
+    "translation": "Branch"
+  },
+  {
+    "id": "Hash",
+    "translation": "Hash"
+  },
+  {
+    "id": "Author",
+    "translation": "Author"
+  },
+  {
+    "id": "Date",
+    "translation": "Date"
+  },
+  {
+    "id": "Message",
+    "translation": "Message"
+  },
+  {
+    "id": "DeletionCancelled",
+    "translation": "Deletion cancelled."
+  },
+  {
+    "id": "ErrorGettingBranchDetails",
+    "translation": "Error getting details for branch {{.Branch}}: {{.Error}}"
   }
 ]

@@ -42,5 +42,37 @@
   {
     "id": "HelpLangFlag",
     "translation": "言語を指定します (例: en, ja)"
+  },
+  {
+    "id": "ConfirmDeletion",
+    "translation": "以下のブランチを削除してもよろしいですか？"
+  },
+  {
+    "id": "Branch",
+    "translation": "ブランチ"
+  },
+  {
+    "id": "Hash",
+    "translation": "ハッシュ"
+  },
+  {
+    "id": "Author",
+    "translation": "作成者"
+  },
+  {
+    "id": "Date",
+    "translation": "日付"
+  },
+  {
+    "id": "Message",
+    "translation": "メッセージ"
+  },
+  {
+    "id": "DeletionCancelled",
+    "translation": "削除はキャンセルされました。"
+  },
+  {
+    "id": "ErrorGettingBranchDetails",
+    "translation": "ブランチ {{.Branch}} の詳細取得中にエラーが発生しました: {{.Error}}"
   }
 ]

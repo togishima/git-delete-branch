@@ -11,6 +11,7 @@ This tool provides an interactive command-line interface to view and delete mult
 - **Incremental Search:** Filter branches by typing parts of the branch name.
 - **Safe by Design:** Automatically excludes the currently checked-out branch from the deletion list.
 - **Internationalization (i18n):** Automatically displays messages in English or Japanese based on your system's `LANG` environment variable.
+- **Deletion Confirmation with Details:** Before deletion, review selected branches with their latest commit hash, author, date, and message.
 
 ## Installation
 
@@ -68,7 +69,13 @@ git delete-branch -lang ja
 
 ### How to Interact
 
-- **Navigate:** Use the **Up/Down arrow keys** to move through the list of branches.
-- **Search:** Simply start typing to filter the list.
-- **Select:** Press the **Spacebar** to select/deselect the highlighted branch.
-- **Confirm:** Press **Enter** to delete all selected branches.
+1.  **Select Branches:**
+    - **Navigate:** Use the **Up/Down arrow keys** to move through the list of branches.
+    - **Search:** Simply start typing to filter the list.
+    - **Select:** Press the **Spacebar** to select/deselect the highlighted branch.
+    - **Confirm Selection:** Press **Enter** to proceed to the confirmation step.
+
+2.  **Confirm Deletion:**
+    - After selecting branches, a summary of the chosen branches (including latest commit details) will be displayed.
+    - A confirmation prompt will ask if you wish to proceed with the deletion.
+    - Type `y` for Yes or `n` for No, then press **Enter**.

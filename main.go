@@ -1,3 +1,5 @@
+
+
 package main
 
 import (
@@ -16,6 +18,35 @@ import (
 
 //go:embed locales/*.json
 var localeFS embed.FS
+
+type BranchDetail struct {
+	Name    string
+	Hash    string
+	Author  string
+	Date    string
+	Message string
+}
+
+func getBranchDetail(branchName string) (BranchDetail, error) {
+	cmd := exec.Command("git", "log", "-1", "--pretty=format:%H%n%an%n%ad%n%s", branchName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return BranchDetail{}, fmt.Errorf("git log failed: %w\n%s", err, string(output))
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) < 4 {
+		return BranchDetail{}, fmt.Errorf("unexpected git log output: %s", string(output))
+	}
+
+	return BranchDetail{
+		Name:    branchName,
+		Hash:    lines[0],
+		Author:  lines[1],
+		Date:    lines[2],
+		Message: lines[3],
+	},	nil
+}
 
 func main() {
 	bundle := i18n.NewBundle(language.English)
@@ -51,8 +82,6 @@ func main() {
 		fmt.Printf("%s\n\n%s\n\nOptions:\n  -h, --help    %s\n  -lang string  %s\n", usage, description, help, langHelp)
 		os.Exit(0)
 	}
-
-	// ... (rest of the code is the same)
 
 	// Get current branch
 	currentBranchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
@@ -107,6 +136,59 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Get details for selected branches
+	var details []BranchDetail
+	for _, branchName := range branchesToDelete {
+		detail, err := getBranchDetail(branchName)
+		if err != nil {
+			msg, _ := localizer.Localize(&i18n.LocalizeConfig{
+				MessageID: "ErrorGettingBranchDetails",
+				TemplateData: map[string]interface{}{"Branch": branchName, "Error": err},
+			})
+			fmt.Println(msg)
+			continue
+		}
+		details = append(details, detail)
+	}
+
+	if len(details) == 0 {
+		msg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "NoBranchesSelected"})
+		fmt.Println(msg)
+		os.Exit(0)
+	}
+
+	// Display confirmation
+	confirmMsg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "ConfirmDeletion"})
+	fmt.Printf("\n%s\n", confirmMsg)
+
+	branchHeader, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "Branch"})
+	hashHeader, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "Hash"})
+	authorHeader, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "Author"})
+	dateHeader, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "Date"})
+	messageHeader, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "Message"})
+
+	fmt.Printf("%-20s %-8s %-20s %-25s %s\n", branchHeader, hashHeader, authorHeader, dateHeader, messageHeader)
+	fmt.Println(strings.Repeat("-", 90))
+
+	for _, d := range details {
+		fmt.Printf("%-20s %-8.8s %-20s %-25s %s\n", d.Name, d.Hash, d.Author, d.Date, d.Message)
+	}
+	fmt.Println(strings.Repeat("-", 90))
+
+	confirm := false
+	promptConfirm := &survey.Confirm{
+		Message: "Proceed with deletion?",
+		Default: false,
+	}
+	survey.AskOne(promptConfirm, &confirm)
+
+	if !confirm {
+		cancelMsg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "DeletionCancelled"})
+		fmt.Println(cancelMsg)
+		os.Exit(0)
+	}
+
+	// Proceed with deletion
 	for _, branch := range branchesToDelete {
 		deleteCmd := exec.Command("git", "branch", "-d", branch)
 		deleteOutput, err := deleteCmd.CombinedOutput()
