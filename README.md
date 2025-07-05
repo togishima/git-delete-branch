@@ -12,6 +12,7 @@ This tool provides an interactive command-line interface to view and delete mult
 - **Safe by Design:** Automatically excludes the currently checked-out branch from the deletion list.
 - **Internationalization (i18n):** Automatically displays messages in English or Japanese based on your system's `LANG` environment variable.
 - **Deletion Confirmation with Details:** Before deletion, review selected branches with their latest commit hash, author, date, and message.
+- **Visual Merge Status:** Branches are visually marked as `(merged)` (green) or `(unmerged)` (red) in the selection list.
 
 ## Installation
 
@@ -71,9 +72,10 @@ git delete-branch -lang ja
 ### How to Interact
 
 1.  **Select Branches:**
+    - The list of branches will show `(merged)` (green) or `(unmerged)` (red) next to each branch name to indicate its merge status with the current branch.
     - **Navigate:** Use the **Up/Down arrow keys** to move through the list of branches.
     - **Search:** Simply start typing to filter the list.
-    - **Select:** Press the **Spacebar** to select/deselect the highlighted branch.
+    - **Select:** Press the **Tab** key to select/deselect the highlighted branch (or **Shift+Tab** for multiple selections in some `fzf` configurations).
     - **Confirm Selection:** Press **Enter** to proceed to the confirmation step.
 
 2.  **Confirm Deletion:**

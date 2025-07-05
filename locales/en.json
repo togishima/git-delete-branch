@@ -82,5 +82,13 @@
   {
     "id": "InstallFzf",
     "translation": "You can install fzf from: https://github.com/junegunn/fzf#installation"
+  },
+  {
+    "id": "MergedIndicator",
+    "translation": "(merged)"
+  },
+  {
+    "id": "UnmergedIndicator",
+    "translation": "(unmerged)"
   }
 ]

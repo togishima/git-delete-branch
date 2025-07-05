@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -9,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -19,6 +19,16 @@ import (
 //go:embed locales/*.json
 var localeFS embed.FS
 
+// ANSI escape code for colors
+const (
+	ColorGreen = "\033[32m"
+	ColorRed   = "\033[31m"
+	ColorReset = "\033[0m"
+)
+
+// Regex to remove ANSI color codes
+var ansiStripper = regexp.MustCompile("\033[[0-9;]*m")
+
 type BranchDetail struct {
 	Name    string
 	Hash    string
@@ -27,8 +37,18 @@ type BranchDetail struct {
 	Message string
 }
 
+// cleanBranchName removes color codes and merge indicators from a branch name
+func cleanBranchName(branchName string) string {
+	// First, remove ANSI color codes
+	cleaned := ansiStripper.ReplaceAllString(branchName, "")
+	// Then, remove the merge indicator (e.g., " (merged)" or " (unmerged)")
+	parts := strings.SplitN(cleaned, " (", 2)
+	return strings.TrimSpace(parts[0])
+}
+
 func getBranchDetail(branchName string) (BranchDetail, error) {
-	cmd := exec.Command("git", "log", "-1", "--pretty=format:%H%n%an%n%ad%n%s", branchName)
+	cleanName := cleanBranchName(branchName)
+	cmd := exec.Command("git", "log", "-1", "--pretty=format:%H%n%an%n%ad%n%s", cleanName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return BranchDetail{}, fmt.Errorf("git log failed: %w\n%s", err, string(output))
@@ -40,12 +60,12 @@ func getBranchDetail(branchName string) (BranchDetail, error) {
 	}
 
 	return BranchDetail{
-		Name:    branchName,
+		Name:    cleanName,
 		Hash:    lines[0],
 		Author:  lines[1],
 		Date:    lines[2],
 		Message: lines[3],
-	},	nil
+	}, nil
 }
 
 func main() {
@@ -79,12 +99,13 @@ func main() {
 
 	// Handle internal fzf preview request
 	if *getLogFlag != "" {
-		cmd := exec.Command("git", "log", "--color=always", *getLogFlag)
+		cleanName := cleanBranchName(*getLogFlag)
+		cmd := exec.Command("git", "log", "--color=always", cleanName)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting log for %s: %v\n", *getLogFlag, err)
+			fmt.Fprintf(os.Stderr, "Error getting log for %s: %v\n", cleanName, err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -120,6 +141,7 @@ func main() {
 	}
 	currentBranch := strings.TrimSpace(string(currentBranchOutput))
 
+	// Get all local branches
 	cmd := exec.Command("git", "branch")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -131,16 +153,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	branches := strings.Split(string(output), "\n")
-	var cleanBranches []string
-	for _, branch := range branches {
+	allBranches := strings.Split(string(output), "\n")
+
+	// Get merged branches
+	mergedCmd := exec.Command("git", "branch", "--merged")
+	mergedOutput, err := mergedCmd.CombinedOutput()
+	if err != nil {
+		// Log error but continue, as this is not critical
+		fmt.Fprintf(os.Stderr, "Warning: Could not get merged branches: %v\n", err)
+	}
+	mergedBranchesMap := make(map[string]bool)
+	for _, branch := range strings.Split(string(mergedOutput), "\n") {
+		mergedBranchesMap[strings.TrimSpace(strings.TrimPrefix(branch, "* "))] = true
+	}
+
+	var fzfItems []string
+	for _, branch := range allBranches {
 		branch = strings.TrimSpace(strings.TrimPrefix(branch, "* "))
 		if branch != "" && branch != currentBranch {
-			cleanBranches = append(cleanBranches, branch)
+			indicator := localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "UnmergedIndicator"})
+			color := ColorRed
+			if mergedBranchesMap[branch] {
+				indicator = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "MergedIndicator"})
+				color = ColorGreen
+			}
+			fzfItems = append(fzfItems, fmt.Sprintf("%s%s %s%s", color, branch, indicator, ColorReset))
 		}
 	}
 
-	if len(cleanBranches) == 0 {
+	if len(fzfItems) == 0 {
 		msg, _ := localizer.Localize(&i18n.LocalizeConfig{MessageID: "NoBranchesToDelete"})
 		fmt.Println(msg)
 		os.Exit(0)
@@ -154,7 +195,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fzfCmd := exec.Command("fzf", "--multi", "--preview", fmt.Sprintf("%s -get-log {}", executablePath))
+	fzfCmd := exec.Command("fzf", "--multi", "--ansi", "--preview", fmt.Sprintf("%s -get-log {}", executablePath))
 	fzfCmd.Stderr = os.Stderr // Show fzf errors
 
 	// Pass branches to fzf stdin
@@ -165,8 +206,8 @@ func main() {
 	}
 	go func() {
 		defer fzfStdin.Close()
-		for _, branch := range cleanBranches {
-			fmt.Fprintln(fzfStdin, branch)
+		for _, item := range fzfItems {
+			fmt.Fprintln(fzfStdin, item)
 		}
 	}()
 
@@ -194,7 +235,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	branchesToDelete := strings.Split(selectedBranchesStr, "\n")
+	// Clean selected branch names by removing indicators and color codes
+	var branchesToDelete []string
+	for _, selectedItem := range strings.Split(selectedBranchesStr, "\n") {
+		branchesToDelete = append(branchesToDelete, cleanBranchName(selectedItem))
+	}
 
 	// Get details for selected branches
 	var details []BranchDetail

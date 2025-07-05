@@ -82,5 +82,13 @@
   {
     "id": "InstallFzf",
     "translation": "fzfは以下からインストールできます: https://github.com/junegunn/fzf#installation"
+  },
+  {
+    "id": "MergedIndicator",
+    "translation": "(マージ済み)"
+  },
+  {
+    "id": "UnmergedIndicator",
+    "translation": "(未マージ)"
   }
 ]
