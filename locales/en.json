@@ -1,0 +1,30 @@
+[
+  {
+    "id": "SelectBranchesToDelete",
+    "translation": "Select branches to delete:"
+  },
+  {
+    "id": "NoBranchesToDelete",
+    "translation": "No branches to delete."
+  },
+  {
+    "id": "NoBranchesSelected",
+    "translation": "No branches selected."
+  },
+  {
+    "id": "ErrorGettingCurrentBranch",
+    "translation": "Error getting current branch: {{.Error}}"
+  },
+  {
+    "id": "ErrorRunningGitBranch",
+    "translation": "Error running git branch: {{.Error}}"
+  },
+  {
+    "id": "ErrorDeletingBranch",
+    "translation": "Error deleting branch {{.Branch}}: {{.Error}}"
+  },
+  {
+    "id": "BranchDeletedSuccessfully",
+    "translation": "Branch '{{.Branch}}' deleted successfully."
+  }
+]
